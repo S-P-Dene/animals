@@ -19,20 +19,133 @@
       width: 390px;
       height: 300px;
     }
+	
+    .message {
+      width: 100%;
+      height: 65px;
+	  color: white;
+      background-color: #1a74ea;
+      display: flex;
+	  flex-direction: column;
+      justify-content: left;
+      font-size: 18px;
+      box-sizing: border-box;
+	  padding:8px;
+	  padding-left: 20px;
+    }	
+  
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 125px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 5px;
+	  padding: 5px;
+	  border-bottom: 1px solid lightgray;
+	  /* background: linear-gradient(to bottom, #1a74ea, green); */
+    }  
+	
+    .grid button {
+      width: 120px;
+      height: 50px;
+      margin: 0;
+      border: 0px solid red;
+      background-color: #eee;
+      cursor: pointer;
+      font-size: 270%;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+	  
+    }  
+	
+    .grid button span {
+      font-size: 100%;
+      line-height: 1;
+      transform: translateY(2px);
+    }	
+	
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(7, 51px);
+      grid-template-rows: repeat(1, 50px);
+      gap: 4px;
+	  padding: 5px;
+    }  
+	
+    .controls button {
+      width: 50px;
+      height: 50px;
+      margin: 0;
+      border: 0px solid red;
+      background-color: lightgray;
+      cursor: pointer;
 
-    /* Your style here... */
+      font-size: 270%;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }	
+	
+	.controls button:disabled {
+	  background-color:white;
+	  cursor: auto;
+	  font-size:100%;
+	}
+	
+	#verify {
+	  color:white;
+	  background-color: #1a74ea;
+	  font-size: 110%;
+	  font-weight: 300;
+	  border-radius: 2px;
+	  align-items: center;
+	  grid-column: span 2;
+	  width: 100px;
+	}	
+	  
   </style>
 </head>
 
 <body>
   <div id="captcha-container">
-    <!-- Add your CAPTCHA here: -->
-    Hello world!
-
-    <!-- We've added a sample button. Feel free to remove it: -->
-    <button id="solve">
-      Solve!
-    </button>
+      <div class="message" id="message">
+          <div id="select">Select all images with</div>
+          <div id="category" style="font-weight: bold; font-size:130%;">animals</div>
+      </div>
+	  
+	  <div id="grid" class="grid">
+          <!-- buttons added by script -->  
+	  </div>  
+	  <div class="controls">
+		  <button id="refresh" style="background-color: white;">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                  <path d="M 25,13 A 12,12 0 1 1 13,25" fill="none" stroke="grey" stroke-width="3" transform="rotate(135 25 25)"/>
+				  <polygon points="35,14 35,18 31,18" fill="grey" stroke="grey" stroke-width="2"/>
+          </svg>
+		  </button>	 
+		  <button id="listen" style="background-color: white;">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                  <path d="M 10 22 A 12 12 0 0 1 34 22" fill="none" stroke="grey" stroke-width="3" />
+                  <rect x="8.5" y="21.9" width="3" height="15" fill="grey" />
+                  <rect x="8.5" y="26.9" width="10" height="12" fill="grey" />
+                  <rect x="32.5" y="21.9" width="3" height="15" fill="grey" />
+                  <rect x="25.5" y="26.9" width="10" height="12" fill="grey" />
+              </svg>
+		  </button>
+		  <button id="info" style="background-color: white;">
+              <svg width="50" height="50" viewBox="0 0 50 50">
+                  <path d="M 10 25 A 12 12 0 0 1 34 25 A 12 12 0 0 1 10 25" fill="none" stroke="grey" stroke-width="2" />
+				  <rect x="21" y="19" width="2" height="2" fill="grey" />
+                  <rect x="21" y="23" width="2" height="9" fill="grey" />
+              </svg>
+		  </button>	  
+		  <button class="disabled" disabled></button>
+		  <button class="disabled" disabled></button>
+		  <button id="verify" onclick="verify();">SKIP</button>
+      </div>
+	  
   </div>
 
   <script type="text/javascript">
@@ -41,12 +154,110 @@
       function captchaSuccess() {
         window.top.postMessage("success", '*');
       }
+	  
+	  function clicked(button) {
+		  document.getElementById('verify').innerText = 'VERIFY';
+		  
+		  b = document.getElementById(button);
+		  
+		  if (!correct.has(b.innerText)) {
+		      mistakes ++;
+			  console.log('Mistakes: ' + mistakes); // TODO: REMOVE
+		  }
 
-      // Your CAPTCHA code goes here, we've added a simple example below:
-      document.getElementById('solve')
-           .addEventListener('click', () => captchaSuccess());
+		  b.innerHTML = `<span>${all_images[next]}</span>`;
+		  next = (next+1) % all_images.length;
+		  
+		  let remaining = Array.from(document.getElementById('grid').children).filter(x => correct.has(x.innerText)).length;
+		  console.log('Remaining: ' + remaining) // TODO: REMOVE
+	  }
+	  
+	  function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+      }	  
+  
+	  function verify() {
+	      buttons = Array.from(document.getElementById('grid').children);
+		  
+		  if (!buttons.some((n) => correct.has(n.innerText)) && mistakes == 0) {
+			  captchaSuccess();
+		  }
+		  else {
+			  reset();
+		  }
+	  }
+	  
+	  
+	  function listen() {
+	      alert("Error 0x0042069 : Couldn't get the audio from the request. Please try again");
+          reset();		  
+	  }
+	  
+	  function info() {
+	      
+		  print();
+	  }
+	  
+	  function reset() {
+	      category = "animals";
+		  document.getElementById('select').innerText = "Select all images with";
+		  document.getElementById('category').innerText = category;
+		  
+		  shuffle(other);
+		  all_images = animals.concat(other.slice(0, 15));
+		  
+		  correct = new Set(animals);
+		  shuffle(all_images);
+		  
+		  const buttons = document.getElementById('grid').children;
+		  
+		  for (let i = 0; i < 9; i++) {
+		      buttons[i].innerHTML = `<span>${all_images[i]}</span>`;
+		  }       		  
+		  next = 9;		
+		  
+		  mistakes = 0;
 
+          document.getElementById('verify').innerText = 'SKIP';		  
+		  
+      }
+	  
+	  /////////////////////////////////////
+	  
+      var animals = Array.from("🐀🐃🐅🐆🐇🐊🐋🐌🐐🐑🐒🐓🐔🐖🐗🐘🐙🐛🐜🐝🐞🐟🐠🐢🐤🐦🐧🐨🐩🐪🐫🐬🐭🐮🐯🐰🐱🐳🐴🐵🐶🐷🐸🐹🐺🐻🐼🕷🦅🦆🦇🦈🦉🦊🦌🦍🦎🦏🦑🦒🦔🦗🦘🦙🦚🦛🦜🦝🦞🦢🦣🦦🦧🦨🦩🦫🦬🦭🪰🪱🪲🪳🪼🪿🫎🐈🐂🐁🐄🐕");
+	  
+      var other = Array.from("🍅🍇🍊🍋🍌🍍🍎🍐🍒🍓🍕🍩🍪🌹🌷🌻🪻🥀💐🌼🌸⚽⚾🏀🏈🏉🥎🏐🧶🎱🌞🚗🚑🚁🍀🍄🌲🚀🖖🛞💾🎲📪🚢");
+	  
+	  var next;
+	  var mistakes;
+	  var correct = new Set();
+      var all_images;
+	  
+	  // Create buttons
+	  const grid = document.getElementById('grid');
+	  for (let i = 0; i < 9; i++) {
+	  
+          const button = document.createElement('button');
+          button.id = `${i}`;
+          		  
+          button.onclick = function () {
+              clicked(button.id);
+          };
+          grid.appendChild(button);
+      }
+	  
+	  document.getElementById('refresh').onclick = reset;
+	  document.getElementById('listen').onclick = listen;
+	  document.getElementById('info').onclick = info;
+	  document.getElementById('verify').onclick = verify;
+	  
+	  reset();
+	  
     })(window, document);
+	
   </script>
 </body>
 </html>
